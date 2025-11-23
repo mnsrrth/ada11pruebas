@@ -1,58 +1,60 @@
 import streamlit as st
-import pandas as pd
+import requests
 import json
 
-st.set_page_config(page_title="Ruta de Decisión - Pruebas Estadísticas", layout="centered")
+# ---------------------------
+# Cargar JSON desde GitHub
+# ---------------------------
+URL_RAW_JSON = "https://raw.githubusercontent.com/USUARIO/REPOSITORIO/main/ruta_decision.json"
 
-# ----------------------------------------------------
-# Cargar árbol de decisión desde GitHub RAW
-# ----------------------------------------------------
-@st.cache_data
-def cargar_arbol(url):
-    return json.loads(pd.read_csv(url).to_json(orient="records"))[0]
+def cargar_ruta():
+    response = requests.get(URL_RAW_JSON)
+    return response.json()
 
-# Pega tu enlace RAW:
-URL = "AQUI_TU_URL_RAW"
-arbol = cargar_arbol(URL)
+ruta = cargar_ruta()
 
-# ----------------------------------------------------
-# Estado
-# ----------------------------------------------------
-if "nodo" not in st.session_state:
-    st.session_state.nodo = "inicio"
-
+# Inicializar estado
+if "nodo_actual" not in st.session_state:
+    st.session_state.nodo_actual = ruta
 if "historial" not in st.session_state:
     st.session_state.historial = []
 
-# ----------------------------------------------------
-# Función para avanzar en el árbol
-# ----------------------------------------------------
-def avanzar(siguiente):
-    st.session_state.historial.append(st.session_state.nodo)
-    st.session_state.nodo = siguiente
+# Función para avanzar
+def avanzar(respuesta):
+    nodo = st.session_state.nodo_actual
+    st.session_state.historial.append(respuesta)
 
-# ----------------------------------------------------
-# Mostrar nodo actual
-# ----------------------------------------------------
-nodo = arbol[st.session_state.nodo]
+    if "opciones" in nodo and respuesta in nodo["opciones"]:
+        st.session_state.nodo_actual = nodo["opciones"][respuesta]
+    else:
+        st.error("Error en la ruta de decisión.")
+        return
 
-st.title("📊 Ruta de Decisión – Selección de Pruebas Estadísticas")
 
-st.subheader(nodo["pregunta"])
+# Función para reiniciar
+def reiniciar():
+    st.session_state.nodo_actual = ruta
+    st.session_state.historial = []
 
-# Si es un nodo final → mostrar resultado
-if nodo["tipo"] == "final":
 
-    st.success(f"### ✔ Prueba recomendada: **{nodo['resultado']}**")
-    st.write(f"**Justificación:** {nodo['explicacion']}")
+# ---------------------------
+# INTERFAZ STREAMLIT
+# ---------------------------
+st.title("🌿 Ruta de Decisión para Pruebas Psicométricas")
 
-    if st.button("🔄 Reiniciar"):
-        st.session_state.nodo = "inicio"
-        st.session_state.historial = []
+nodo = st.session_state.nodo_actual
+
+# Si ya hay resultado, mostrarlo
+if "resultado" in nodo:
+    st.success(f"✔ **Prueba recomendada: {nodo['resultado']}**")
+    st.button("Reiniciar", on_click=reiniciar)
+else:
+    st.subheader(nodo["pregunta"])
+
+    opciones = list(nodo["opciones"].keys())
+    respuesta = st.radio("Selecciona una opción:", opciones)
+
+    if st.button("Continuar"):
+        avanzar(respuesta)
         st.rerun()
 
-else:
-    # Mostrar opciones
-    for opcion in nodo["opciones"]:
-        if st.button(opcion["texto"]):
-            avanzar(opcion["siguiente"])
