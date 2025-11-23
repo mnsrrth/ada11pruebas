@@ -1,0 +1,46 @@
+{
+  "pregunta": "¿Cuántos grupos deseas comparar?",
+  "opciones": {
+    "2": {
+      "pregunta": "¿Los grupos son independientes?",
+      "opciones": {
+        "Sí": {
+          "pregunta": "¿Los datos son normales y de escala intervalo/razón?",
+          "opciones": {
+            "Sí": {
+              "resultado": "t de Student para muestras independientes"
+            },
+            "No": {
+              "resultado": "U de Mann–Whitney"
+            }
+          }
+        },
+        "No": {
+          "pregunta": "¿Los datos son normales?",
+          "opciones": {
+            "Sí": {
+              "resultado": "t de Student para muestras relacionadas"
+            },
+            "No": {
+              "resultado": "Wilcoxon para muestras relacionadas"
+            }
+          }
+        }
+      }
+    },
+    "3 o más": {
+      "pregunta": "¿Los datos cumplen normalidad y homogeneidad de varianzas?",
+      "opciones": {
+        "Sí": {
+          "resultado": "ANOVA de un factor"
+        },
+        "No": {
+          "resultado": "Kruskal–Wallis"
+        }
+      }
+    },
+    "Ninguno (variables categóricas)": {
+      "resultado": "Chi-cuadrada"
+    }
+  }
+}
